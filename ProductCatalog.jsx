@@ -366,69 +366,99 @@ function CSVImportModal({ onImport, onClose }) {
   );
 }
 
-function SKUCard({ sku, onEdit }) {
-  const catColor = CATEGORY_COLORS[sku.category] || "#7F77DD";
-  const s = getStatus(sku.status);
-  const margin = sku.cost && sku.price ? ((sku.price - sku.cost) / sku.price * 100).toFixed(1) : null;
-
+function AssortmentChip({ icon, label, value }) {
+  if (!value) return null;
   return (
-    <div style={{ background: "var(--color-background-primary)", border: "0.5px solid var(--color-border-tertiary)", borderRadius: 12, overflow: "hidden", display: "flex", flexDirection: "column" }}>
-      {/* Photo / color swatch */}
-      <div style={{ height: 96, background: sku.photo ? "transparent" : catColor + "15", position: "relative", overflow: "hidden", flexShrink: 0 }}>
-        {sku.photo
-          ? <img src={sku.photo} alt={sku.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-          : <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
-              <i className="ti ti-photo" style={{ fontSize: 32, color: catColor, opacity: 0.3 }} aria-hidden="true" />
-            </div>
-        }
-        <button
-          onClick={() => onEdit(sku)}
-          style={{ position: "absolute", top: 6, right: 6, width: 28, height: 28, borderRadius: 8, background: "rgba(0,0,0,0.5)", border: "none", color: "white", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", opacity: 0, transition: "opacity 0.15s" }}
-          className="card-edit-btn"
-        >
-          <i className="ti ti-edit" style={{ fontSize: 13 }} aria-hidden="true" />
-        </button>
-      </div>
-
-      <div style={{ padding: "10px 12px", flex: 1, display: "flex", flexDirection: "column" }}>
-        <div style={{ fontSize: 9, fontFamily: "var(--font-mono)", color: catColor, marginBottom: 3, fontWeight: 500 }}>{sku.sku}</div>
-        <div style={{ fontSize: 12, fontWeight: 600, lineHeight: 1.3, marginBottom: 4, flex: 1 }}>{sku.name}</div>
-        {sku.keyCallout && <div style={{ fontSize: 10, color: "var(--color-text-secondary)", marginBottom: 6, fontStyle: "italic", lineHeight: 1.3 }}>{sku.keyCallout}</div>}
-        <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 6 }}>
-          {[sku.sp1, sku.sp2, sku.sp3].filter(Boolean).map((sp, i) => (
-            <span key={i} style={{ fontSize: 9, padding: "1px 6px", borderRadius: 99, background: catColor + "18", color: catColor, fontWeight: 500 }}>{sp}</span>
-          ))}
-        </div>
-        {/* Retailer dots */}
-        <div style={{ display: "flex", gap: 4, marginBottom: 8 }}>
-          {Object.entries(sku.retailers || {}).map(([r, active]) => (
-            <span key={r} title={r} style={{ fontSize: 9, padding: "1px 5px", borderRadius: 4, background: active ? "#7F77DD20" : "var(--color-background-secondary)", color: active ? "#7F77DD" : "var(--color-text-tertiary)", border: `0.5px solid ${active ? "#7F77DD50" : "var(--color-border-tertiary)"}`, fontWeight: active ? 600 : 400 }}>
-              {r === "Macy's" ? "Mcy" : r.slice(0, 3)}
-            </span>
-          ))}
-        </div>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
-          <div>
-            <div style={{ fontSize: 14, fontWeight: 600 }}>{sku.price ? `$${sku.price.toFixed(2)}` : "—"}</div>
-            {margin && <div style={{ fontSize: 9, color: parseFloat(margin) >= 40 ? "#059669" : "#b45309" }}>{margin}% margin</div>}
-          </div>
-          <span style={{ fontSize: 10, padding: "2px 7px", borderRadius: 99, background: s.bg, color: s.color, fontWeight: 500 }}>{s.label}</span>
-        </div>
-      </div>
-
-      <style>{`.card-edit-btn { opacity: 0 !important; } *:hover > .card-edit-btn { opacity: 1 !important; }`}</style>
+    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+      <i className={`ti ${icon}`} style={{ fontSize: 10, color: "var(--color-text-tertiary)", flexShrink: 0 }} aria-hidden="true" />
+      <span style={{ fontSize: 10, color: "var(--color-text-tertiary)" }}>{label}:</span>
+      <span style={{ fontSize: 10, color: "var(--color-text-secondary)", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{value}</span>
     </div>
   );
 }
 
+function SKUCard({ sku, retailer, onEdit }) {
+  const catColor = CATEGORY_COLORS[sku.category] || "#7F77DD";
+  const s = getStatus(sku.status);
+  const margin = sku.cost && sku.price ? ((sku.price - sku.cost) / sku.price * 100).toFixed(1) : null;
+  const showAssortment = retailer && retailer !== "All";
+
+  return (
+    <div style={{ background: "var(--color-background-primary)", border: "0.5px solid var(--color-border-tertiary)", borderRadius: 12, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+      {/* Photo */}
+      <div style={{ height: 88, background: sku.photo ? "transparent" : catColor + "15", position: "relative", overflow: "hidden", flexShrink: 0 }}>
+        {sku.photo
+          ? <img src={sku.photo} alt={sku.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          : <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
+              <i className="ti ti-photo" style={{ fontSize: 28, color: catColor, opacity: 0.3 }} aria-hidden="true" />
+            </div>
+        }
+      </div>
+
+      <div style={{ padding: "10px 12px", flex: 1, display: "flex", flexDirection: "column" }}>
+        <div style={{ fontSize: 9, fontFamily: "var(--font-mono)", color: catColor, marginBottom: 2, fontWeight: 500 }}>{sku.sku}</div>
+        <div style={{ fontSize: 12, fontWeight: 600, lineHeight: 1.3, marginBottom: 3 }}>{sku.name}</div>
+        {sku.keyCallout && <div style={{ fontSize: 10, color: "var(--color-text-secondary)", marginBottom: 5, fontStyle: "italic", lineHeight: 1.3 }}>{sku.keyCallout}</div>}
+
+        {/* Selling points */}
+        {[sku.sp1, sku.sp2, sku.sp3].some(Boolean) && (
+          <div style={{ display: "flex", gap: 3, flexWrap: "wrap", marginBottom: showAssortment ? 8 : 6 }}>
+            {[sku.sp1, sku.sp2, sku.sp3].filter(Boolean).map((sp, i) => (
+              <span key={i} style={{ fontSize: 9, padding: "1px 5px", borderRadius: 99, background: catColor + "18", color: catColor, fontWeight: 500 }}>{sp}</span>
+            ))}
+          </div>
+        )}
+
+        {/* Retailer-specific assortment data */}
+        {showAssortment && (
+          <div style={{ background: "var(--color-background-secondary)", borderRadius: 7, padding: "7px 9px", marginBottom: 8, display: "flex", flexDirection: "column", gap: 3 }}>
+            <AssortmentChip icon="ti-layout" label="Placement" value={sku.placement} />
+            <AssortmentChip icon="ti-door" label="Doors" value={sku.doors ? sku.doors.toLocaleString() : null} />
+            <AssortmentChip icon="ti-calendar" label="Timing" value={sku.timing} />
+            <AssortmentChip icon="ti-repeat" label="Buy type" value={sku.buyType} />
+          </div>
+        )}
+
+        {/* Price + status row */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: "auto" }}>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 600 }}>{sku.price ? `$${sku.price.toFixed(2)}` : "—"}</div>
+            {margin && <div style={{ fontSize: 9, color: parseFloat(margin) >= 40 ? "#059669" : "#b45309" }}>{margin}% margin</div>}
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
+            <span style={{ fontSize: 10, padding: "2px 7px", borderRadius: 99, background: s.bg, color: s.color, fontWeight: 500 }}>{s.label}</span>
+            <button onClick={() => onEdit(sku)} style={{ fontSize: 10, padding: "2px 8px", background: "transparent", border: "0.5px solid var(--color-border-secondary)", color: "var(--color-text-tertiary)", borderRadius: 6, cursor: "pointer" }}>
+              <i className="ti ti-edit" style={{ fontSize: 10, marginRight: 3 }} aria-hidden="true" />Edit
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const RETAILER_ICONS = {
+  "Target": "ti-target",
+  "Walmart": "ti-building-store",
+  "Costco": "ti-building-warehouse",
+  "Amazon": "ti-brand-amazon",
+  "Macy's": "ti-shopping-bag",
+};
+
 export default function ProductCatalog({ skus: initialSkus }) {
   const [skus, setSkus] = useState(initialSkus);
+  const [retailer, setRetailer] = useState("All");
   const [cat, setCat] = useState("All");
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState(null);
   const [importing, setImporting] = useState(false);
 
-  const filtered = skus.filter(s =>
+  // When a retailer tab is active, only show SKUs assigned to that retailer
+  const retailerFiltered = retailer === "All"
+    ? skus
+    : skus.filter(s => s.retailers?.[retailer]);
+
+  const filtered = retailerFiltered.filter(s =>
     (cat === "All" || s.category === cat) &&
     (!search || s.name.toLowerCase().includes(search.toLowerCase()) || s.sku.toLowerCase().includes(search.toLowerCase()))
   );
@@ -449,13 +479,55 @@ export default function ProductCatalog({ skus: initialSkus }) {
     });
   }, []);
 
+  // Reset category filter when switching retailers so stale filters don't hide cards
+  function selectRetailer(r) {
+    setRetailer(r);
+    setCat("All");
+  }
+
+  const categoriesInView = [...new Set(retailerFiltered.map(s => s.category))];
+
   return (
     <div>
-      {/* Toolbar */}
-      <div style={{ display: "flex", gap: 10, marginBottom: 16, flexWrap: "wrap", alignItems: "center" }}>
+      {/* ── Retailer tabs ── */}
+      <div style={{ display: "flex", gap: 0, marginBottom: 20, borderBottom: "0.5px solid var(--color-border-tertiary)" }}>
+        {["All", ...RETAILERS_LIST].map(r => {
+          const count = r === "All" ? skus.length : skus.filter(s => s.retailers?.[r]).length;
+          const isActive = retailer === r;
+          return (
+            <button
+              key={r}
+              onClick={() => selectRetailer(r)}
+              style={{
+                display: "flex", alignItems: "center", gap: 6,
+                padding: "8px 16px",
+                background: "transparent",
+                border: "none",
+                borderBottom: isActive ? "2px solid #7F77DD" : "2px solid transparent",
+                color: isActive ? "#7F77DD" : "var(--color-text-secondary)",
+                fontWeight: isActive ? 600 : 400,
+                fontSize: 12,
+                cursor: "pointer",
+                marginBottom: -1,
+                whiteSpace: "nowrap",
+                transition: "color 0.12s",
+              }}
+            >
+              {r !== "All" && <i className={`ti ${RETAILER_ICONS[r] || "ti-building-store"}`} style={{ fontSize: 13 }} aria-hidden="true" />}
+              {r}
+              <span style={{ fontSize: 10, padding: "1px 6px", borderRadius: 99, background: isActive ? "#7F77DD20" : "var(--color-background-secondary)", color: isActive ? "#7F77DD" : "var(--color-text-tertiary)", fontWeight: 500 }}>
+                {count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* ── Toolbar ── */}
+      <div style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap", alignItems: "center" }}>
         <div style={{ position: "relative", flex: 1, minWidth: 160 }}>
           <i className="ti ti-search" style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", fontSize: 13, color: "var(--color-text-tertiary)" }} aria-hidden="true" />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search products…" style={{ paddingLeft: 32, width: "100%", boxSizing: "border-box", fontSize: 12 }} />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder={`Search${retailer !== "All" ? ` ${retailer}` : ""} products…`} style={{ paddingLeft: 32, width: "100%", boxSizing: "border-box", fontSize: 12 }} />
         </div>
         <button onClick={() => setImporting(true)} style={{ fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}>
           <i className="ti ti-file-import" aria-hidden="true" />Import CSV
@@ -463,33 +535,32 @@ export default function ProductCatalog({ skus: initialSkus }) {
         <span style={{ fontSize: 11, color: "var(--color-text-tertiary)" }}>{filtered.length} products</span>
       </div>
 
-      {/* Category pills */}
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
-        <button onClick={() => setCat("All")} style={{ fontSize: 11, padding: "4px 12px", borderRadius: 99, background: cat === "All" ? "#7F77DD" : "var(--color-background-secondary)", color: cat === "All" ? "white" : "var(--color-text-secondary)", border: `0.5px solid ${cat === "All" ? "#7F77DD" : "var(--color-border-tertiary)"}` }}>
-          All ({skus.length})
+      {/* ── Category pills (scoped to current retailer view) ── */}
+      <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 16 }}>
+        <button onClick={() => setCat("All")} style={{ fontSize: 11, padding: "3px 11px", borderRadius: 99, background: cat === "All" ? "#7F77DD" : "var(--color-background-secondary)", color: cat === "All" ? "white" : "var(--color-text-secondary)", border: `0.5px solid ${cat === "All" ? "#7F77DD" : "var(--color-border-tertiary)"}` }}>
+          All ({retailerFiltered.length})
         </button>
-        {CATEGORIES.map(c => (
-          <button key={c} onClick={() => setCat(c)} style={{ fontSize: 11, padding: "4px 12px", borderRadius: 99, background: cat === c ? CATEGORY_COLORS[c] : "var(--color-background-secondary)", color: cat === c ? "white" : "var(--color-text-secondary)", border: `0.5px solid ${cat === c ? CATEGORY_COLORS[c] : "var(--color-border-tertiary)"}` }}>
-            {c} ({skus.filter(s => s.category === c).length})
+        {categoriesInView.map(c => (
+          <button key={c} onClick={() => setCat(c)} style={{ fontSize: 11, padding: "3px 11px", borderRadius: 99, background: cat === c ? CATEGORY_COLORS[c] : "var(--color-background-secondary)", color: cat === c ? "white" : "var(--color-text-secondary)", border: `0.5px solid ${cat === c ? CATEGORY_COLORS[c] : "var(--color-border-tertiary)"}` }}>
+            {c} ({retailerFiltered.filter(s => s.category === c).length})
           </button>
         ))}
       </div>
 
-      {/* Cards grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 12 }}>
-        {filtered.map(sku => (
-          <div key={sku.sku} style={{ position: "relative" }} onMouseEnter={e => { const btn = e.currentTarget.querySelector(".card-edit-overlay"); if (btn) btn.style.opacity = "1"; }} onMouseLeave={e => { const btn = e.currentTarget.querySelector(".card-edit-overlay"); if (btn) btn.style.opacity = "0"; }}>
-            <SKUCard sku={sku} onEdit={setEditing} />
-            <button
-              onClick={() => setEditing(sku)}
-              className="card-edit-overlay"
-              style={{ position: "absolute", top: 6, right: 6, width: 28, height: 28, borderRadius: 8, background: "rgba(0,0,0,0.5)", border: "none", color: "white", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", opacity: 0, transition: "opacity 0.15s", zIndex: 2 }}
-            >
-              <i className="ti ti-edit" style={{ fontSize: 13 }} aria-hidden="true" />
-            </button>
-          </div>
-        ))}
-      </div>
+      {/* ── Cards grid ── */}
+      {filtered.length > 0 ? (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))", gap: 12 }}>
+          {filtered.map(sku => (
+            <SKUCard key={sku.sku} sku={sku} retailer={retailer} onEdit={setEditing} />
+          ))}
+        </div>
+      ) : (
+        <div style={{ padding: "60px 0", textAlign: "center", color: "var(--color-text-tertiary)" }}>
+          <i className="ti ti-building-store" style={{ fontSize: 32, display: "block", marginBottom: 10, opacity: 0.4 }} aria-hidden="true" />
+          <div style={{ fontSize: 13, marginBottom: 4 }}>No products in {retailer} assortment</div>
+          <div style={{ fontSize: 11 }}>Select SKUs in the edit modal to add them to this retailer.</div>
+        </div>
+      )}
 
       {editing && <SKUEditModal sku={editing} onSave={handleSave} onClose={() => setEditing(null)} />}
       {importing && <CSVImportModal onImport={handleImport} onClose={() => setImporting(false)} />}
