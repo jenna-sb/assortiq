@@ -3,7 +3,7 @@ import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell, Legend
 } from "recharts";
-import { RAW_SKUS, getStatus, CATEGORIES, CATEGORY_COLORS, RETAILERS_LIST } from "./data.js";
+import { SKUS as RAW_SKUS, getStatus, CATEGORIES, CATEGORY_COLORS, RETAILERS_LIST } from "./data.js";
 import ProductCatalog from "./ProductCatalog.jsx";
 
 // ─── Shared components ────────────────────────────────────────────────────────

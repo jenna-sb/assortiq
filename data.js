@@ -99,6 +99,39 @@ export function getStatus(raw) {
 export const CATEGORIES = [...new Set(RAW_SKUS.map(s => s.category))];
 export const RETAILERS_LIST = ["Target", "Walmart", "Costco", "Amazon", "Macy's"];
 
+export const COATING_OPTIONS = [
+  { id: "cleanglide", label: "CleanGlide™", full: "CleanGlide™ Ceramic Coating" },
+  { id: "truglide",   label: "TruGlide™",   full: "TruGlide™ Ceramic Coating" },
+  { id: "cleancoat",  label: "CleanCoating™", full: "CleanCoating™ Ceramic" },
+];
+
+export const RETAILER_STATUS_OPTIONS = [
+  { value: "",                                label: "— No status" },
+  { value: "CURRENT - CF 2027",               label: "Active / Current" },
+  { value: "AWARDED",                         label: "Awarded" },
+  { value: "CURRENT - BEING DROPPED SEPT 2026", label: "Dropping" },
+  { value: "DROPPED SEPT 2026",               label: "Dropped" },
+  { value: "PASSED",                          label: "Passed" },
+  { value: "50% Probability",                 label: "50/50" },
+];
+
+// Normalize each SKU to ensure coating + per-retailer status fields exist
+function makeRetailerData(sku) {
+  return {
+    Target:    { active: !!(sku.retailers?.Target),    status: sku.retailers?.Target    ? (sku.status || "") : "" },
+    Walmart:   { active: !!(sku.retailers?.Walmart),   status: "" },
+    Costco:    { active: !!(sku.retailers?.Costco),    status: "" },
+    Amazon:    { active: !!(sku.retailers?.Amazon),    status: "" },
+    "Macy's":  { active: !!(sku.retailers?.["Macy's"]), status: "" },
+  };
+}
+
+export const SKUS = RAW_SKUS.map(s => ({
+  ...s,
+  coating: s.coating ?? null,
+  retailerData: s.retailerData ?? makeRetailerData(s),
+}));
+
 export const CATEGORY_COLORS = {
   "Waffle": "#7F77DD",
   "Waffle Licensed": "#D85A30",

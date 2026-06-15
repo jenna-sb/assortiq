@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from "react";
-import { CATEGORIES, CATEGORY_COLORS, RETAILERS_LIST, getStatus } from "./data.js";
+import { CATEGORIES, CATEGORY_COLORS, RETAILERS_LIST, COATING_OPTIONS, RETAILER_STATUS_OPTIONS, getStatus } from "./data.js";
 
 const FIELD_SECTIONS = [
   {
@@ -377,40 +377,187 @@ function AssortmentChip({ icon, label, value }) {
   );
 }
 
-function SKUCard({ sku, retailer, onEdit }) {
+const RETAILER_ABBR = { Target: "Tgt", Walmart: "Wmt", Costco: "Cst", Amazon: "Amz", "Macy's": "Mcy" };
+
+function SKUCard({ sku, retailer, onEdit, onUpdate }) {
   const catColor = CATEGORY_COLORS[sku.category] || "#7F77DD";
-  const s = getStatus(sku.status);
   const margin = sku.cost && sku.price ? ((sku.price - sku.cost) / sku.price * 100).toFixed(1) : null;
-  const showAssortment = retailer && retailer !== "All";
+
+  // Which retailer pill is expanded for status selection.
+  // Pre-open the active tab's retailer so it's ready immediately.
+  const [expandedRetailer, setExpandedRetailer] = useState(
+    retailer !== "All" ? retailer : null
+  );
+
+  const rd = sku.retailerData || {};
+
+  function toggleRetailer(r) {
+    const isActive = rd[r]?.active;
+    const next = {
+      ...rd,
+      [r]: { ...rd[r], active: !isActive, status: isActive ? "" : (rd[r]?.status || "") },
+    };
+    // Keep boolean retailers map in sync
+    const retailers = Object.fromEntries(RETAILERS_LIST.map(k => [k, !!next[k]?.active]));
+    onUpdate({ ...sku, retailerData: next, retailers });
+    setExpandedRetailer(!isActive ? r : (expandedRetailer === r ? null : expandedRetailer));
+  }
+
+  function setRetailerStatus(r, status) {
+    const next = { ...rd, [r]: { ...rd[r], status } };
+    onUpdate({ ...sku, retailerData: next });
+  }
+
+  function setCoating(id) {
+    onUpdate({ ...sku, coating: sku.coating === id ? null : id });
+  }
+
+  const activeRetailerStatus = expandedRetailer ? rd[expandedRetailer]?.status || "" : "";
+  const activeStatusOption = RETAILER_STATUS_OPTIONS.find(o => o.value === activeRetailerStatus);
+  const statusDisplay = activeStatusOption?.label !== "— No status" ? activeStatusOption : null;
 
   return (
     <div style={{ background: "var(--color-background-primary)", border: "0.5px solid var(--color-border-tertiary)", borderRadius: 12, overflow: "hidden", display: "flex", flexDirection: "column" }}>
       {/* Photo */}
-      <div style={{ height: 88, background: sku.photo ? "transparent" : catColor + "15", position: "relative", overflow: "hidden", flexShrink: 0 }}>
+      <div style={{ height: 80, background: sku.photo ? "transparent" : catColor + "15", position: "relative", overflow: "hidden", flexShrink: 0 }}>
         {sku.photo
           ? <img src={sku.photo} alt={sku.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           : <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
-              <i className="ti ti-photo" style={{ fontSize: 28, color: catColor, opacity: 0.3 }} aria-hidden="true" />
+              <i className="ti ti-photo" style={{ fontSize: 26, color: catColor, opacity: 0.25 }} aria-hidden="true" />
             </div>
         }
       </div>
 
-      <div style={{ padding: "10px 12px", flex: 1, display: "flex", flexDirection: "column" }}>
+      <div style={{ padding: "10px 12px", flex: 1, display: "flex", flexDirection: "column", gap: 0 }}>
+        {/* Identity */}
         <div style={{ fontSize: 9, fontFamily: "var(--font-mono)", color: catColor, marginBottom: 2, fontWeight: 500 }}>{sku.sku}</div>
         <div style={{ fontSize: 12, fontWeight: 600, lineHeight: 1.3, marginBottom: 3 }}>{sku.name}</div>
-        {sku.keyCallout && <div style={{ fontSize: 10, color: "var(--color-text-secondary)", marginBottom: 5, fontStyle: "italic", lineHeight: 1.3 }}>{sku.keyCallout}</div>}
+        {sku.keyCallout && (
+          <div style={{ fontSize: 10, color: "var(--color-text-secondary)", marginBottom: 5, fontStyle: "italic", lineHeight: 1.3 }}>{sku.keyCallout}</div>
+        )}
 
         {/* Selling points */}
         {[sku.sp1, sku.sp2, sku.sp3].some(Boolean) && (
-          <div style={{ display: "flex", gap: 3, flexWrap: "wrap", marginBottom: showAssortment ? 8 : 6 }}>
+          <div style={{ display: "flex", gap: 3, flexWrap: "wrap", marginBottom: 8 }}>
             {[sku.sp1, sku.sp2, sku.sp3].filter(Boolean).map((sp, i) => (
               <span key={i} style={{ fontSize: 9, padding: "1px 5px", borderRadius: 99, background: catColor + "18", color: catColor, fontWeight: 500 }}>{sp}</span>
             ))}
           </div>
         )}
 
-        {/* Retailer-specific assortment data */}
-        {showAssortment && (
+        {/* ── Retailer selection ── */}
+        <div style={{ borderTop: "0.5px solid var(--color-border-tertiary)", paddingTop: 8, marginBottom: 6 }}>
+          <div style={{ fontSize: 9, fontWeight: 600, color: "var(--color-text-tertiary)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 5 }}>Retailers</div>
+          <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+            {RETAILERS_LIST.map(r => {
+              const isOn = !!rd[r]?.active;
+              const isExpanded = expandedRetailer === r;
+              return (
+                <button
+                  key={r}
+                  onClick={() => {
+                    if (!isOn) toggleRetailer(r);
+                    setExpandedRetailer(isExpanded ? null : r);
+                  }}
+                  style={{
+                    fontSize: 9, fontWeight: 600, padding: "2px 7px", borderRadius: 5,
+                    border: `0.5px solid ${isOn ? "#7F77DD" : "var(--color-border-secondary)"}`,
+                    background: isExpanded ? "#7F77DD" : isOn ? "rgba(127,119,221,0.12)" : "var(--color-background-secondary)",
+                    color: isExpanded ? "white" : isOn ? "#7F77DD" : "var(--color-text-tertiary)",
+                    cursor: "pointer", transition: "all 0.1s",
+                  }}
+                  title={r}
+                >
+                  {RETAILER_ABBR[r]}
+                  {isOn && !isExpanded && (
+                    <span style={{ display: "inline-block", width: 4, height: 4, borderRadius: 99, background: "#7F77DD", marginLeft: 3, verticalAlign: "middle" }} />
+                  )}
+                </button>
+              );
+            })}
+            {/* Remove from retailer button when one is active */}
+            {expandedRetailer && rd[expandedRetailer]?.active && (
+              <button
+                onClick={() => toggleRetailer(expandedRetailer)}
+                title={`Remove from ${expandedRetailer}`}
+                style={{ fontSize: 9, padding: "2px 6px", borderRadius: 5, border: "0.5px solid #fee2e2", background: "#fee2e2", color: "#dc2626", cursor: "pointer" }}
+              >
+                <i className="ti ti-x" style={{ fontSize: 9 }} aria-hidden="true" />
+              </button>
+            )}
+          </div>
+
+          {/* Status dropdown — appears when a retailer pill is expanded */}
+          {expandedRetailer && (
+            <div style={{ marginTop: 6 }}>
+              <div style={{ fontSize: 9, color: "var(--color-text-tertiary)", marginBottom: 3 }}>{expandedRetailer} status</div>
+              <select
+                value={rd[expandedRetailer]?.status || ""}
+                onChange={e => {
+                  if (!rd[expandedRetailer]?.active) {
+                    // Auto-activate when setting a status
+                    const next = { ...rd, [expandedRetailer]: { active: true, status: e.target.value } };
+                    const retailers = Object.fromEntries(RETAILERS_LIST.map(k => [k, !!next[k]?.active]));
+                    onUpdate({ ...sku, retailerData: next, retailers });
+                  } else {
+                    setRetailerStatus(expandedRetailer, e.target.value);
+                  }
+                }}
+                style={{ width: "100%", fontSize: 11, padding: "4px 8px" }}
+              >
+                {RETAILER_STATUS_OPTIONS.map(o => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+              {statusDisplay && (
+                <div style={{ marginTop: 4 }}>
+                  {(() => { const s = getStatus(rd[expandedRetailer]?.status); return (
+                    <span style={{ fontSize: 9, padding: "2px 7px", borderRadius: 99, background: s.bg, color: s.color, fontWeight: 500 }}>{s.label}</span>
+                  ); })()}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* ── Coating selection ── */}
+        <div style={{ borderTop: "0.5px solid var(--color-border-tertiary)", paddingTop: 8, marginBottom: 8 }}>
+          <div style={{ fontSize: 9, fontWeight: 600, color: "var(--color-text-tertiary)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 5 }}>Coating</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            {COATING_OPTIONS.map(c => {
+              const isSelected = sku.coating === c.id;
+              return (
+                <button
+                  key={c.id}
+                  onClick={() => setCoating(c.id)}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 6,
+                    padding: "5px 8px", borderRadius: 6, textAlign: "left", cursor: "pointer",
+                    border: `0.5px solid ${isSelected ? "#7F77DD" : "var(--color-border-secondary)"}`,
+                    background: isSelected ? "rgba(127,119,221,0.1)" : "var(--color-background-secondary)",
+                    transition: "all 0.1s",
+                  }}
+                >
+                  <div style={{
+                    width: 12, height: 12, borderRadius: 99, flexShrink: 0,
+                    border: `1.5px solid ${isSelected ? "#7F77DD" : "var(--color-border-secondary)"}`,
+                    background: isSelected ? "#7F77DD" : "transparent",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    {isSelected && <div style={{ width: 4, height: 4, borderRadius: 99, background: "white" }} />}
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 10, fontWeight: isSelected ? 600 : 400, color: isSelected ? "#7F77DD" : "var(--color-text-primary)", lineHeight: 1.2 }}>{c.label}</div>
+                    <div style={{ fontSize: 9, color: "var(--color-text-tertiary)", lineHeight: 1.2 }}>{c.full.replace(c.label, "").trim()}</div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ── Assortment data (when on a specific retailer tab) ── */}
+        {retailer !== "All" && (sku.placement || sku.doors || sku.timing || sku.buyType) && (
           <div style={{ background: "var(--color-background-secondary)", borderRadius: 7, padding: "7px 9px", marginBottom: 8, display: "flex", flexDirection: "column", gap: 3 }}>
             <AssortmentChip icon="ti-layout" label="Placement" value={sku.placement} />
             <AssortmentChip icon="ti-door" label="Doors" value={sku.doors ? sku.doors.toLocaleString() : null} />
@@ -419,18 +566,15 @@ function SKUCard({ sku, retailer, onEdit }) {
           </div>
         )}
 
-        {/* Price + status row */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: "auto" }}>
+        {/* ── Price + edit ── */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: "auto", paddingTop: 6, borderTop: "0.5px solid var(--color-border-tertiary)" }}>
           <div>
             <div style={{ fontSize: 14, fontWeight: 600 }}>{sku.price ? `$${sku.price.toFixed(2)}` : "—"}</div>
             {margin && <div style={{ fontSize: 9, color: parseFloat(margin) >= 40 ? "#059669" : "#b45309" }}>{margin}% margin</div>}
           </div>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
-            <span style={{ fontSize: 10, padding: "2px 7px", borderRadius: 99, background: s.bg, color: s.color, fontWeight: 500 }}>{s.label}</span>
-            <button onClick={() => onEdit(sku)} style={{ fontSize: 10, padding: "2px 8px", background: "transparent", border: "0.5px solid var(--color-border-secondary)", color: "var(--color-text-tertiary)", borderRadius: 6, cursor: "pointer" }}>
-              <i className="ti ti-edit" style={{ fontSize: 10, marginRight: 3 }} aria-hidden="true" />Edit
-            </button>
-          </div>
+          <button onClick={() => onEdit(sku)} style={{ fontSize: 10, padding: "3px 9px", background: "transparent", border: "0.5px solid var(--color-border-secondary)", color: "var(--color-text-tertiary)", borderRadius: 6, cursor: "pointer" }}>
+            <i className="ti ti-edit" style={{ fontSize: 10, marginRight: 3 }} aria-hidden="true" />Edit
+          </button>
         </div>
       </div>
     </div>
@@ -464,6 +608,11 @@ export default function ProductCatalog({ skus: initialSkus }) {
   );
 
   const handleSave = useCallback((updated) => {
+    setSkus(prev => prev.map(s => s.sku === updated.sku ? updated : s));
+  }, []);
+
+  // Inline card updates (retailer toggles, coating, per-retailer status)
+  const handleUpdate = useCallback((updated) => {
     setSkus(prev => prev.map(s => s.sku === updated.sku ? updated : s));
   }, []);
 
@@ -551,7 +700,7 @@ export default function ProductCatalog({ skus: initialSkus }) {
       {filtered.length > 0 ? (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))", gap: 12 }}>
           {filtered.map(sku => (
-            <SKUCard key={sku.sku} sku={sku} retailer={retailer} onEdit={setEditing} />
+            <SKUCard key={sku.sku} sku={sku} retailer={retailer} onEdit={setEditing} onUpdate={handleUpdate} />
           ))}
         </div>
       ) : (
