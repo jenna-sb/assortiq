@@ -1,44 +1,51 @@
 # AssortIQ — Assortment Planning Platform
 
-Modern assortment planning tool for merchants, category managers, and planners. No AI dependencies — fully self-contained.
+A modern web-based assortment planning tool built for merchants, category managers, and planners.
 
-## What's included
+## Features
+- Executive dashboard with KPIs and charts
+- Assortment grid with filtering, sorting, and bulk selection
+- Retailer planning (scorecard, placements, timeline views)
+- SKU rationalization with health scoring
+- Product catalog card view
+- AI copilot powered by Claude
 
-- **Dashboard** — KPIs, status breakdown, price architecture, action alerts
-- **Assortment Grid** — Sortable/filterable SKU table with bulk select
-- **Retailer Planning** — Target scorecard, placements, calendar timeline
-- **SKU Rationalization** — Health scoring, drop alerts, category analysis
-- **Product Catalog** — Editable cards with photo upload, selling points, logistics, margin calc
+## Deploy to Vercel (5 minutes, free)
 
-## Deploy to Vercel (first time)
-
-1. Go to https://vercel.com and sign up (free)
-2. Click **Add New Project**
-3. Click **Upload** and drag this entire `assortiq` folder
+1. Go to [vercel.com](https://vercel.com) and sign up with GitHub/Google
+2. Click **"Add New Project"**
+3. Drag this entire folder into the Vercel import screen, OR push to a GitHub repo first
 4. Vercel auto-detects Vite — click **Deploy**
-5. Your app is live at a URL like `assortiq-yourname.vercel.app`
+5. You get a shareable URL like `assortiq-yourname.vercel.app`
 
-## Redeploy an update (drag & drop method)
+## Deploy to Netlify (alternative)
 
-1. Go to your Vercel dashboard → click your `assortiq` project
-2. Click **Deployments** tab → **Create Deployment**
-3. Drop this updated `assortiq` folder
-4. Vercel redeploys in ~30 seconds — same URL, no disruption
+1. Go to [netlify.com](https://netlify.com) → "Add new site" → "Deploy manually"
+2. Run `npm run build` locally first, then drag the `dist/` folder to Netlify
+3. Done — shareable URL instantly
 
 ## Run locally
 
 ```bash
 npm install
 npm run dev
-# Open http://localhost:5173
 ```
+Open http://localhost:5173
 
 ## Add more retailers
 
-Upload additional Excel files to Claude and ask it to merge them.
-Data lives in `src/App.jsx` in the `RAW_SKUS` array.
+Upload additional Excel files to Claude and ask it to add them to `src/App.jsx`.
+Each retailer's data gets added to the `RAW_SKUS` array with a `retailer` field,
+and the cross-retailer master grid view will populate automatically.
+
+## Team sharing
+
+Once deployed to Vercel/Netlify, just send your team the URL.
+For password protection, use Vercel's password protection feature (Pro plan)
+or add Netlify's simple password feature.
 
 ## Tech stack
 - React 18 + Vite
-- Recharts
-- Tabler Icons (via CDN)
+- Recharts for data visualization
+- Tabler Icons
+- Anthropic Claude API (for AI copilot)
